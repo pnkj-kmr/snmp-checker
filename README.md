@@ -9,6 +9,7 @@ _Download the relevent os package from [here](https://github.com/pnkj-kmr/snmp-c
 _create a **input.csv** file into your current working directory_
 
 ```
+# SNMP v2c
 ip,community_string
 <ip_address1>,<pulic>
 <ip_address2>,<abc>
@@ -20,6 +21,7 @@ ip,community_string
 _OR_
 
 ```
+# SNMP v3
 ip,username,auth_type,auth_pass,priv_type,priv_pass
 <ip_address1>,user1,MD5,zyx,AES,sdhsd
 <ip_address2>,user2,SHA,zyx,AES,sdhsd
@@ -84,7 +86,7 @@ Different input file if any
 ./snmpchecker -f ./new_input_file.csv
 ```
 
-### `-o` (DEFAULT: "./input.csv")
+### `-o` (DEFAULT: "output.csv")
 
 Different output file as
 
