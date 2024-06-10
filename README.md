@@ -56,6 +56,8 @@ ip,tag,result,error_if_any
 Usage of ./snmpchecker:
   -f string
         give a file name (default "input.csv")
+  -json
+        file type - default[csv]
   -o string
         output file name (default "output.csv")
   -oid string
@@ -114,6 +116,14 @@ SNMP port
 
 ```
 ./snmpchecker -port 161
+```
+
+### `-json` (DEFAULT: csv)
+
+For json input and output
+
+```
+./snmpchecker -json
 ```
 
 ### `-w` (DEFAULT: 4)
