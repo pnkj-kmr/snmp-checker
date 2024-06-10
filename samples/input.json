@@ -1,0 +1,4 @@
+[
+  { "ip": "125.xx.255.xxx", "community": "air" },
+  { "ip": "127.0.0.1", "community": "test" }
+]

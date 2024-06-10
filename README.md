@@ -62,10 +62,14 @@ Usage of ./snmpchecker:
         snmp walk oid (multiple -oid 'oid1 oid2 oid3') (default "1.3.6.1.2.1.1.1.0")
   -port int
         snmp port (default 161)
+  -r int
+        retries
   -t int
-        snmp timeout - secs (default 5)
+        snmp timeout [secs] (default 5)
+  -v string
+        SNMP version (2c / 3) (default "2c")
   -w int
-        number of worker (default 4)
+        number of workers (default 4)
 
 -------
 Example:
@@ -127,6 +131,22 @@ Increase end IP SNMP timeout
 ```
 # timeout 10 seconds
 ./snmpchecker -t 10
+```
+
+### `-v` (DEFAULT: 2c)
+
+SNMP version changes
+
+```
+./snmpchecker -v 3
+```
+
+### `-r` (DEFAULT: 0)
+
+SNMP retries
+
+```
+./snmpchecker -r 1
 ```
 
 :)

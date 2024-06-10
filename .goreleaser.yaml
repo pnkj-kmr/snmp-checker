@@ -24,8 +24,7 @@ archives:
     files:
       - LICENSE
       - README.md
-      - sample_input.csv
-      - sample_output.csv
+      - samples
     format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-

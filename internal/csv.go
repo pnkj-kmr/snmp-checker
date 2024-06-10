@@ -5,37 +5,31 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 )
 
-// InputV2C represent the input for version v2c
-type InputV2C struct {
-	IP        string
-	Community string
+type _csv struct {
+	ifile   string
+	ofile   string
+	version SnmpVersion
+	retries int
+	timeout int
+	oids    []string
 }
 
-// InputV3 represent the input for version v3
-type InputV3 struct {
-	IP       string
-	UserName string
-	AuthType string
-	AuthPass string
-	PrivType string
-	PrivPass string
+func NewV2C(ifile, ofile string, retries, timeout int, oids []string) SNMPChecker {
+	return &_csv{
+		ifile, ofile, Version2c, retries, timeout, oids,
+	}
 }
 
-// Output represent the output result
-type Output struct {
-	IP     string
-	Tag    string
-	Result []string
-	Err    error
+func NewV3(ifile, ofile string, retries, timeout int, oids []string) SNMPChecker {
+	return &_csv{
+		ifile, ofile, Version3, retries, timeout, oids,
+	}
 }
 
-// GetIPList helps get IP list from csv
-func GetIPList(f string) ([]InputV2C, []InputV3) {
-	file, err := os.Open(f)
-
+func (c *_csv) GetInput() (out []Input) {
+	file, err := os.Open(c.ifile)
 	if err != nil {
 		log.Fatal("Error while reading the file", err)
 	}
@@ -44,34 +38,70 @@ func GetIPList(f string) ([]InputV2C, []InputV3) {
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		log.Fatal("Error while Error reading records - ", err)
+		log.Fatal("Error while Error reading records", err)
+	}
+	// TODO - mutliple oid IP specific case
+	var oids []string
+	if len(c.oids) == 0 {
+		oids = []string{"1.3.6.1.2.1.1.1.0"}
+	} else {
+		oids = c.oids
 	}
 
-	var v2c []InputV2C
-	var v3 []InputV3
 	for _, r := range records {
 		if len(r) == 2 {
-			v2c = append(v2c, InputV2C{r[0], r[1]})
+			//<ip>,<community>
+			out = append(out, Input{
+				IP:        r[0],
+				Community: r[1],
+				Tag:       "", // TODO - tag into csv
+				Version:   c.version,
+				Oids:      oids,
+				Timeout:   c.timeout,
+				Retries:   c.retries,
+				UserName:  "",
+				AuthType:  "",
+				AuthPass:  "",
+				PrivType:  "",
+				PrivPass:  "",
+			})
 		} else if len(r) == 6 {
-			// TODO - need to revisit in case of SNMP v3
-			v3 = append(v3, InputV3{r[0], r[1], r[2], r[3], r[4], r[5]})
+			// <ip>,snmpv3usr,MD5,Enoc@thpk,AES,Airtel@thpk
+			out = append(out, Input{
+				IP:        r[0],
+				Community: "",
+				Tag:       "", // TODO - tag into csv
+				Version:   c.version,
+				Oids:      oids,
+				Timeout:   c.timeout,
+				Retries:   c.retries,
+				UserName:  r[1],
+				AuthType:  r[2],
+				AuthPass:  r[3],
+				PrivType:  r[4],
+				PrivPass:  r[5],
+			})
 		}
 	}
-	return v2c, v3
+	return out
 }
 
-// PutOutput helps to write result into file
-func PutOutput(f string, ch <-chan Output, exit chan<- struct{}) {
-	file, err := os.Create(fmt.Sprintf("./%s", f))
+func (c *_csv) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
+	file, err := os.Create(fmt.Sprintf("./%s", c.ofile))
 	if err != nil {
-		log.Fatal("Unable to write into file -", err)
+		log.Fatal("Unable to write into file", err)
 	}
 	defer file.Close()
-	file.Write([]byte("ip,tag,result,error_if_any\n"))
+	file.Write([]byte("ip,tag,oid,value,error_if_any\n"))
 	for r := range ch {
-		// log.Println("-------", r)
-		x := strings.Join(r.Result, "|")
-		file.Write([]byte(fmt.Sprintf("%s,%s,%s,%s\n", r.IP, r.Tag, x, r.Err.Error())))
+		if len(r.Data) != 0 {
+			for _, variable := range r.Data {
+				file.Write([]byte(fmt.Sprintf("%s,%s,%s,%v,%s\n", r.I.IP, r.I.Tag, variable.Name, variable.Value, r.Err)))
+			}
+		} else {
+			file.Write([]byte(fmt.Sprintf("%s,%s,,,%s\n", r.I.IP, r.I.Tag, r.Err)))
+
+		}
 	}
-	exit <- struct{}{}
+	exitCh <- struct{}{}
 }

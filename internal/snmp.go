@@ -8,26 +8,25 @@ import (
 	g "github.com/gosnmp/gosnmp"
 )
 
-// GetSNMP_V2C helps to perform snmp v2c and return the grouped result
-func GetSNMP_V2C(ip, community string, oids []string, port, timeout uint16) (out []string, err error) {
+// GetSNMP helps to perform snmp v2c and return the grouped result
+func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 	//
 	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
 	if port == 0 {
 		port = 161
 	}
+	var community string = i.Community
 	if community == "" {
 		community = "public"
 	}
+	var timeout int = i.Timeout
 	if timeout == 0 {
 		timeout = 3
 	}
-	if len(oids) == 0 {
-		oids = []string{"1.3.6.1.2.1.1.1.0"}
-	}
 
 	inst := &g.GoSNMP{
-		Target:             ip,
+		Target:             i.IP,
 		Port:               port,
 		Transport:          "udp",
 		Community:          community,
@@ -35,6 +34,7 @@ func GetSNMP_V2C(ip, community string, oids []string, port, timeout uint16) (out
 		Timeout:            time.Duration(timeout) * time.Second,
 		ExponentialTimeout: true,
 		MaxOids:            60,
+		Retries:            i.Retries,
 	}
 
 	err = inst.Connect()
@@ -44,20 +44,21 @@ func GetSNMP_V2C(ip, community string, oids []string, port, timeout uint16) (out
 	}
 	defer inst.Conn.Close()
 
-	result, err := inst.Get(oids)
+	result, err := inst.Get(i.Oids)
 	if err != nil {
 		log.Println("SNMP get result err", err)
 		return
 	}
 
+	var data []Data
 	for _, variable := range result.Variables {
-		out = append(out, fmt.Sprintf("%s: %s", variable.Name, variable.Value))
+		data = append(data, Data{Name: variable.Name, Value: variable.Value})
 	}
-	return
+	return Output{I: i, Err: "", Data: data}, nil
 }
 
 // GetSNMP_V3 helps to perform snmp v3 and return the grouped result
-func GetSNMP_V3(ip, username, authtype, authpass, privtype, privpass string, oids []string, port, timeout uint16) (out []string, err error) {
+func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 	//
 	// snmpwalk -v 3 -l <level> -u <username> -a <authtype> -x <privtype> -A <authpass> -X <privpass>  <target> <oid>
 	//
@@ -68,34 +69,35 @@ func GetSNMP_V3(ip, username, authtype, authpass, privtype, privpass string, oid
 	if port == 0 {
 		port = 161
 	}
+	var timeout int = i.Timeout
 	if timeout == 0 {
 		timeout = 3
 	}
-	if len(oids) == 0 {
-		oids = []string{"1.3.6.1.2.1.1.1.0"}
-	}
 	aType := g.MD5
-	if authtype == "SHA" {
+	if i.AuthType == "SHA" {
 		aType = g.SHA
 	}
 	pType := g.AES
-	if privtype == "DES" {
+	if i.PrivType == "DES" {
 		pType = g.DES
 	}
 
 	inst := &g.GoSNMP{
-		Target:        ip,
-		Port:          port,
-		Version:       g.Version3,
-		SecurityModel: g.UserSecurityModel,
-		MsgFlags:      g.AuthPriv,
-		Timeout:       time.Duration(timeout) * time.Second,
+		Target:             i.IP,
+		Port:               port,
+		Version:            g.Version3,
+		SecurityModel:      g.UserSecurityModel,
+		MsgFlags:           g.AuthPriv,
+		Timeout:            time.Duration(timeout) * time.Second,
+		ExponentialTimeout: true,
+		MaxOids:            60,
+		Retries:            i.Retries,
 		SecurityParameters: &g.UsmSecurityParameters{
-			UserName:                 username,
+			UserName:                 i.UserName,
 			AuthenticationProtocol:   aType,
-			AuthenticationPassphrase: authpass,
+			AuthenticationPassphrase: i.AuthPass,
 			PrivacyProtocol:          pType,
-			PrivacyPassphrase:        privpass,
+			PrivacyPassphrase:        i.PrivPass,
 		},
 	}
 
@@ -106,14 +108,15 @@ func GetSNMP_V3(ip, username, authtype, authpass, privtype, privpass string, oid
 	}
 	defer inst.Conn.Close()
 
-	result, err := inst.Get(oids)
+	result, err := inst.Get(i.Oids)
 	if err != nil {
 		log.Println("SNMP get result err", err)
 		return
 	}
 
+	var data []Data
 	for _, variable := range result.Variables {
-		out = append(out, fmt.Sprintf("%s: %s", variable.Name, variable.Value))
+		data = append(data, Data{Name: variable.Name, Value: fmt.Sprintf("%s", variable.Value)})
 	}
-	return
+	return Output{I: i, Err: "", Data: data}, nil
 }
