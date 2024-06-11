@@ -1,4 +1,14 @@
 [
-  { "ip": "125.xx.255.xxx", "community": "air" },
-  { "ip": "127.0.0.1", "community": "test" }
+  { 
+    "ip": "125.xx.255.xxx", 
+    "community": "air", 
+    "tag": "tst",
+    "oids": ["1.1", "2.2", "3.3"],
+    "timeout": 5,
+    "retries": 1
+  },
+  { 
+    "ip": "127.0.0.1", 
+    "community": "test" 
+  }
 ]

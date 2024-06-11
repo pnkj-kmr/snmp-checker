@@ -1,4 +1,7 @@
 snmpchecker
 main
 dist
-
+input.csv
+output.csv
+input.json
+output.json
