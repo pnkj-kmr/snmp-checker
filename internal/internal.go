@@ -24,6 +24,7 @@ type Input struct {
 	Oids      []string    `json:"oids,omitempty"`
 	Timeout   int         `json:"timeout,omitempty"`
 	Retries   int         `json:"retries,omitempty"`
+	Port      int         `json:"port,omitempty"`
 	UserName  string      `json:"user_name,omitempty"`
 	AuthType  string      `json:"auth_type,omitempty"`
 	AuthPass  string      `json:"auth_pass,omitempty"`

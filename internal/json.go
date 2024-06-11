@@ -15,17 +15,18 @@ type _json struct {
 	retries int
 	timeout int
 	oids    []string
+	port    int
 }
 
-func NewJSONV2C(ifile, ofile string, retries, timeout int, oids []string) SNMPChecker {
+func NewJSONV2C(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
 	return &_json{
-		ifile, ofile, Version2c, retries, timeout, oids,
+		ifile, ofile, Version2c, retries, timeout, oids, port,
 	}
 }
 
-func NewJSONV3(ifile, ofile string, retries, timeout int, oids []string) SNMPChecker {
+func NewJSONV3(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
 	return &_json{
-		ifile, ofile, Version3, retries, timeout, oids,
+		ifile, ofile, Version3, retries, timeout, oids, port,
 	}
 }
 
@@ -60,6 +61,9 @@ func (j *_json) GetInput() (out []Input) {
 		}
 		if d.Retries == 0 {
 			d.Retries = j.retries
+		}
+		if d.Port == 0 {
+			d.Port = j.port
 		}
 		outnew = append(outnew, d)
 	}

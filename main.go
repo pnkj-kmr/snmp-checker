@@ -23,20 +23,20 @@ func main() {
 	oids := strings.Split((*oid), " ")
 
 	log.Println("file accepted:", *fileName, "| output file:", *outFilename)
-	log.Println("timeout:", *timeout, "| worker processes:", *noWorkers, "| port:", *port, "| oids:", oids)
+	log.Println("timeout:", *timeout, "| workers:", *noWorkers, "| port:", *port, "| version:", *version, "| json:", *jsontype, "| oids:", oids)
 
 	// SNMPChecker object instance
 	var snmpchecker internal.SNMPChecker
 	if *version == "2c" {
 		if *jsontype {
-			snmpchecker = internal.NewJSONV2C(*fileName, *outFilename, *retries, *timeout, oids)
+			snmpchecker = internal.NewJSONV2C(*fileName, *outFilename, *retries, *timeout, *port, oids)
 		} else {
 
 			snmpchecker = internal.NewV2C(*fileName, *outFilename, *retries, *timeout, oids)
 		}
 	} else if *version == "3" {
 		if *jsontype {
-			snmpchecker = internal.NewJSONV3(*fileName, *outFilename, *retries, *timeout, oids)
+			snmpchecker = internal.NewJSONV3(*fileName, *outFilename, *retries, *timeout, *port, oids)
 		} else {
 			snmpchecker = internal.NewV3(*fileName, *outFilename, *retries, *timeout, oids)
 		}

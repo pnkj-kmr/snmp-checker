@@ -13,8 +13,12 @@ func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 	//
 	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
-	if port == 0 {
-		port = 161
+	var _port uint16 = uint16(i.Port)
+	if _port == 0 {
+		if port == 0 {
+			port = 161
+		}
+		_port = port
 	}
 	var community string = i.Community
 	if community == "" {
@@ -27,7 +31,7 @@ func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 
 	inst := &g.GoSNMP{
 		Target:             i.IP,
-		Port:               port,
+		Port:               _port,
 		Transport:          "udp",
 		Community:          community,
 		Version:            g.Version2c,
@@ -66,8 +70,12 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 		TODO - need to handle snmp v3 properly as per auth and priv types
 	*/
 
-	if port == 0 {
-		port = 161
+	var _port uint16 = uint16(i.Port)
+	if _port == 0 {
+		if port == 0 {
+			port = 161
+		}
+		_port = port
 	}
 	var timeout int = i.Timeout
 	if timeout == 0 {
@@ -84,7 +92,7 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 
 	inst := &g.GoSNMP{
 		Target:             i.IP,
-		Port:               port,
+		Port:               _port,
 		Version:            g.Version3,
 		SecurityModel:      g.UserSecurityModel,
 		MsgFlags:           g.AuthPriv,
