@@ -26,7 +26,7 @@ func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 	}
 	var timeout int = i.Timeout
 	if timeout == 0 {
-		timeout = 3
+		timeout = 5
 	}
 
 	inst := &g.GoSNMP{
@@ -50,7 +50,7 @@ func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 
 	result, err := inst.Get(i.Oids)
 	if err != nil {
-		log.Println("SNMP get result err", err)
+		log.Println("SNMP GET err", err)
 		return
 	}
 
@@ -77,17 +77,15 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 		}
 		_port = port
 	}
+
 	var timeout int = i.Timeout
 	if timeout == 0 {
-		timeout = 3
+		timeout = 5
 	}
-	aType := g.MD5
-	if i.AuthType == "SHA" {
-		aType = g.SHA
-	}
-	pType := g.AES
-	if i.PrivType == "DES" {
-		pType = g.DES
+
+	var msg_flag string = i.SecurityLevel
+	if msg_flag == "" {
+		msg_flag = "AuthPriv"
 	}
 
 	inst := &g.GoSNMP{
@@ -95,18 +93,20 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 		Port:               _port,
 		Version:            g.Version3,
 		SecurityModel:      g.UserSecurityModel,
-		MsgFlags:           g.AuthPriv,
+		MsgFlags:           getMsgFlag(msg_flag),
 		Timeout:            time.Duration(timeout) * time.Second,
 		ExponentialTimeout: true,
 		MaxOids:            60,
 		Retries:            i.Retries,
 		SecurityParameters: &g.UsmSecurityParameters{
 			UserName:                 i.UserName,
-			AuthenticationProtocol:   aType,
+			AuthenticationProtocol:   getAuthType(i.AuthType),
 			AuthenticationPassphrase: i.AuthPass,
-			PrivacyProtocol:          pType,
+			PrivacyProtocol:          getPrivType(i.PrivType),
 			PrivacyPassphrase:        i.PrivPass,
 		},
+		ContextEngineID: i.ContextEngineID,
+		ContextName:     i.ContextName,
 	}
 
 	err = inst.Connect()
@@ -118,13 +118,13 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 
 	result, err := inst.Get(i.Oids)
 	if err != nil {
-		log.Println("SNMP get result err", err)
+		log.Println("SNMP GET err - ", err)
 		return
 	}
 
 	var data []Data
-	for _, variable := range result.Variables {
-		data = append(data, Data{Name: variable.Name, Value: fmt.Sprintf("%s", variable.Value)})
+	for _, v := range result.Variables {
+		data = append(data, Data{Name: v.Name, Value: fmt.Sprintf("%s", v.Value), Type: v.Type})
 	}
 	return Output{I: i, Err: "", Data: data}, nil
 }

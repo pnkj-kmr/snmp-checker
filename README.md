@@ -1,33 +1,53 @@
 # snmp-checker
 
-snmp-checker helps to check SNMP status for multiple IPs with csv input file and generate the output.csv as a result.
+snmp-checker helps to get SNMP status for multiple IPs over mutliple oids with csv/json input file and generate the output.csv/json as a result.
 
 ### HOW TO USE
 
 _Download the relevent os package from [here](https://github.com/pnkj-kmr/snmp-checker/releases)_
 
-_create a **input.csv** file into your current working directory_
+_create a **input.csv** file_
 
 ```
-# SNMP v2c
-ip,community_string
-<ip_address1>,<pulic>
-<ip_address2>,<abc>
-<ip_address3>,<xyz>
+ip,tag,version,community,oids,timeout,retries,port,security_level,user_name,auth_type,auth_pass,priv_type,priv_pass,context_name,context_engineid
+125.72.255.123,test,3,air,"1.1 2.2 3.3",,0,1611,,user1,MD5,test123,AES,test123,,
+127.0.0.1,t0,2,air2,,2,,,,,,,,,,
 
 ...
 ```
 
 _OR_
 
-```
-# SNMP v3
-ip,username,auth_type,auth_pass,priv_type,priv_pass
-<ip_address1>,user1,MD5,zyx,AES,sdhsd
-<ip_address2>,user2,SHA,zyx,AES,sdhsd
-<ip_address3>,user1,MD5,zyx,DES,sdhsd
+_create a **input.json** file_
 
-...
+```
+[
+    { 
+      "ip": "125.72.255.123", 
+      "tag": "test",				# optional
+      "version": 3,					# optional (v2c: 2 | v3: 3) default: v2c
+      "community": "air", 			# optional
+      "oids": ["1.1", "2.2", "3.3"],# optional
+      "timeout": 5,					# optional default: 5
+      "retries": 0,					# optional detault: 0
+      "port": 1611,					# optional default: 161
+      "security_level": "",			# optional (NoAuthNoPriv | AuthNoPriv | AuthPriv | Reportable) default: AuthPriv
+      "user_name": "testuser",		# optional
+      "auth_type": "MD5",			# optional (MD5|SHA|SHA224|SHA-224|SHA256|SHA-256|SHA384|SHA-384|SHA512|SHA-512)
+      "auth_pass": "123",			# optional
+      "priv_type": "AES",			# optional (DES|AES|AES-128|AES192|AES-192|AES256|AES-256|
+	  											AES192C|AES-192C|AES256C|AES-256C)
+      "priv_pass": "123",			# optional
+      "context_name": "",			# optional
+      "context_engineid": ""		# optional
+    },
+    { 
+      "ip": "127.0.0.1", 
+      "community": "test" ,
+      "version": 2
+    },
+	...
+]
 ```
 
 _After creating the file run the executable binary as_
@@ -41,11 +61,52 @@ _After creating the file run the executable binary as_
 _As a result **output.csv** file will be created after completion_
 
 ```
-ip,tag,result,error_if_any
+ip,tag,result,error
 
 
 
 ```
+
+_OR_
+
+_As a result **output.csv** file will be created after completion_
+
+```
+[
+  {
+    "input": {
+      "ip": "127.0.0.1",
+      "version": 2,
+      "community": "test",
+      "oids": ["1.3.6.1.2.1.1.1.0"],
+      "timeout": 5,
+      "port": 161
+    },
+    "error": "error reading from socket: read udp 127.0.0.1:53483-\u003e127.0.0.1:161: recvfrom: connection refused",
+    "data": []
+  },
+  {
+    "input": {
+      "ip": "125.72.255.123",
+      "tag": "test",
+      "version": 3,
+      "community": "air",
+      "oids": ["1.1", "2.2", "3.3"],
+      "timeout": 5,
+      "port": 1611,
+      "user_name": "testuser",
+      "auth_type": "MD5",
+      "auth_pass": "123",
+      "priv_type": "AES",
+      "priv_pass": "123"
+    },
+    "error": "request timeout (after 0 retries)",
+    "data": []
+  }
+  ...
+]
+```
+
 
 ### HELP
 
@@ -84,7 +145,7 @@ Example:
 
 ---
 
-### `-f` (DEFAULT: "./input.csv")
+### `-f` (DEFAULT: "input.csv")
 
 Different input file if any
 
@@ -158,5 +219,35 @@ SNMP retries
 ```
 ./snmpchecker -r 1
 ```
+
+### data type mapping
+
+```
+// Asn1BER's - http://www.ietf.org/rfc/rfc1442.txt
+
+EndOfContents     Asn1BER = 0x00
+UnknownType       Asn1BER = 0x00
+Boolean           Asn1BER = 0x01
+Integer           Asn1BER = 0x02
+BitString         Asn1BER = 0x03
+OctetString       Asn1BER = 0x04
+Null              Asn1BER = 0x05
+ObjectIdentifier  Asn1BER = 0x06
+ObjectDescription Asn1BER = 0x07
+IPAddress         Asn1BER = 0x40
+Counter32         Asn1BER = 0x41
+Gauge32           Asn1BER = 0x42
+TimeTicks         Asn1BER = 0x43
+Opaque            Asn1BER = 0x44
+NsapAddress       Asn1BER = 0x45
+Counter64         Asn1BER = 0x46
+Uinteger32        Asn1BER = 0x47
+OpaqueFloat       Asn1BER = 0x78
+OpaqueDouble      Asn1BER = 0x79
+NoSuchObject      Asn1BER = 0x80
+NoSuchInstance    Asn1BER = 0x81
+EndOfMibView      Asn1BER = 0x82
+```
+
 
 :)

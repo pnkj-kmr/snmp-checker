@@ -1,14 +1,25 @@
 [
-  { 
-    "ip": "125.xx.255.xxx", 
-    "community": "air", 
-    "tag": "tst",
-    "oids": ["1.1", "2.2", "3.3"],
-    "timeout": 5,
-    "retries": 1
-  },
-  { 
-    "ip": "127.0.0.1", 
-    "community": "test" 
-  }
+    { 
+      "ip": "125.72.255.123", 
+      "tag": "test",
+      "version": 3,
+      "community": "air", 
+      "oids": ["1.1", "2.2", "3.3"],
+      "timeout": 5,
+      "retries": 0,
+      "port": 1611,
+      "security_level": "",
+      "user_name": "testuser",
+      "auth_type": "MD5",
+      "auth_pass": "123",
+      "priv_type": "AES",
+      "priv_pass": "123",
+      "context_name": "",
+      "context_engineid": ""
+    },
+    { 
+      "ip": "127.0.0.1", 
+      "community": "test" ,
+      "version": 2
+    }
 ]

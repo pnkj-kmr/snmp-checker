@@ -1,5 +1,7 @@
 package internal
 
+import g "github.com/gosnmp/gosnmp"
+
 type SnmpVersion uint8
 
 const (
@@ -17,25 +19,29 @@ type SNMPChecker interface {
 
 // Input represent the input
 type Input struct {
-	IP        string      `json:"ip"`
-	Community string      `json:"community,omitempty"`
-	Tag       string      `json:"tag,omitempty"`
-	Version   SnmpVersion `json:"version,omitempty"`
-	Oids      []string    `json:"oids,omitempty"`
-	Timeout   int         `json:"timeout,omitempty"`
-	Retries   int         `json:"retries,omitempty"`
-	Port      int         `json:"port,omitempty"`
-	UserName  string      `json:"user_name,omitempty"`
-	AuthType  string      `json:"auth_type,omitempty"`
-	AuthPass  string      `json:"auth_pass,omitempty"`
-	PrivType  string      `json:"priv_type,omitempty"`
-	PrivPass  string      `json:"priv_pass,omitempty"`
+	IP              string      `json:"ip"`
+	Tag             string      `json:"tag,omitempty"`
+	Version         SnmpVersion `json:"version,omitempty"`
+	Community       string      `json:"community,omitempty"`
+	Oids            []string    `json:"oids,omitempty"`
+	Timeout         int         `json:"timeout,omitempty"`
+	Retries         int         `json:"retries,omitempty"`
+	Port            int         `json:"port,omitempty"`
+	SecurityLevel   string      `json:"security_level,omitempty"`
+	UserName        string      `json:"user_name,omitempty"`
+	AuthType        string      `json:"auth_type,omitempty"`
+	AuthPass        string      `json:"auth_pass,omitempty"`
+	PrivType        string      `json:"priv_type,omitempty"`
+	PrivPass        string      `json:"priv_pass,omitempty"`
+	ContextName     string      `json:"context_name,omitempty"`
+	ContextEngineID string      `json:"context_engineid,omitempty"`
 }
 
 // Data represent the snmp result
 type Data struct {
 	Value interface{} `json:"value"`
 	Name  string      `json:"name"`
+	Type  g.Asn1BER   `json:"type"`
 }
 
 // Output represent the output result

@@ -1,3 +1,3 @@
-ip,tag,oid,value,error_if_any
-127.0.0.1,,,,error reading from socket: read udp 127.0.0.1:49157->127.0.0.1:161: recvfrom: connection refused
-125.20.255.172,,,,request timeout (after 0 retries)
+ip,tag,result,error
+127.0.0.1,t0,[],error reading from socket: read udp 127.0.0.1:63722->127.0.0.1:161: recvfrom: connection refused
+125.72.255.123,test,[],request timeout (after 0 retries)

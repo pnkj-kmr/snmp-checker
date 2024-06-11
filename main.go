@@ -7,9 +7,11 @@ import (
 	"snmp-checker/internal"
 	"strings"
 	"sync"
+	"time"
 )
 
 func main() {
+	st := time.Now()
 	fileName := flag.String("f", "input.csv", "give a file name")
 	outFilename := flag.String("o", "output.csv", "output file name")
 	noWorkers := flag.Int("w", 4, "number of worker")
@@ -32,13 +34,13 @@ func main() {
 			snmpchecker = internal.NewJSONV2C(*fileName, *outFilename, *retries, *timeout, *port, oids)
 		} else {
 
-			snmpchecker = internal.NewV2C(*fileName, *outFilename, *retries, *timeout, oids)
+			snmpchecker = internal.NewV2C(*fileName, *outFilename, *retries, *timeout, *port, oids)
 		}
 	} else if *version == "3" {
 		if *jsontype {
 			snmpchecker = internal.NewJSONV3(*fileName, *outFilename, *retries, *timeout, *port, oids)
 		} else {
-			snmpchecker = internal.NewV3(*fileName, *outFilename, *retries, *timeout, oids)
+			snmpchecker = internal.NewV3(*fileName, *outFilename, *retries, *timeout, *port, oids)
 		}
 	} else {
 		log.Fatal("Unsupported SNMP version")
@@ -59,8 +61,6 @@ func main() {
 		go func(i internal.Input, ind, port int) {
 			defer func() { wg.Done(); <-c }()
 			// fmt.Println("ip--- ", ip)
-			// var ok bool
-			// var err error
 			var r internal.Output
 			var err error
 			if i.Version == internal.Version2c {
@@ -82,5 +82,5 @@ func main() {
 	wg.Wait()
 	close(ch)
 	<-exitChan
-	log.Println("Execution completed.")
+	log.Println("Execution completed. time taken", time.Since(st))
 }

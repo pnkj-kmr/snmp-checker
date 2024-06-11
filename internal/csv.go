@@ -2,9 +2,12 @@ package internal
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
+	"strconv"
+	"strings"
 )
 
 type _csv struct {
@@ -14,17 +17,18 @@ type _csv struct {
 	retries int
 	timeout int
 	oids    []string
+	port    int
 }
 
-func NewV2C(ifile, ofile string, retries, timeout int, oids []string) SNMPChecker {
+func NewV2C(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
 	return &_csv{
-		ifile, ofile, Version2c, retries, timeout, oids,
+		ifile, ofile, Version2c, retries, timeout, oids, port,
 	}
 }
 
-func NewV3(ifile, ofile string, retries, timeout int, oids []string) SNMPChecker {
+func NewV3(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
 	return &_csv{
-		ifile, ofile, Version3, retries, timeout, oids,
+		ifile, ofile, Version3, retries, timeout, oids, port,
 	}
 }
 
@@ -40,7 +44,7 @@ func (c *_csv) GetInput() (out []Input) {
 	if err != nil {
 		log.Fatal("Error while Error reading records", err)
 	}
-	// TODO - mutliple oid IP specific case
+
 	var oids []string
 	if len(c.oids) == 0 {
 		oids = []string{"1.3.6.1.2.1.1.1.0"}
@@ -48,60 +52,90 @@ func (c *_csv) GetInput() (out []Input) {
 		oids = c.oids
 	}
 
-	for _, r := range records {
-		if len(r) == 2 {
-			//<ip>,<community>
-			out = append(out, Input{
-				IP:        r[0],
-				Community: r[1],
-				Tag:       "", // TODO - tag into csv
-				Version:   c.version,
-				Oids:      oids,
-				Timeout:   c.timeout,
-				Retries:   c.retries,
-				UserName:  "",
-				AuthType:  "",
-				AuthPass:  "",
-				PrivType:  "",
-				PrivPass:  "",
-			})
-		} else if len(r) == 6 {
-			// <ip>,snmpv3usr,MD5,Enoc@thpk,AES,Airtel@thpk
-			out = append(out, Input{
-				IP:        r[0],
-				Community: "",
-				Tag:       "", // TODO - tag into csv
-				Version:   c.version,
-				Oids:      oids,
-				Timeout:   c.timeout,
-				Retries:   c.retries,
-				UserName:  r[1],
-				AuthType:  r[2],
-				AuthPass:  r[3],
-				PrivType:  r[4],
-				PrivPass:  r[5],
-			})
+	var rowInput Input
+	headers := make(map[int]string)
+	for i, r := range records {
+		if i == 0 {
+			// creating header mapping
+			for j, col := range r {
+				headers[j] = col
+			}
+			continue
 		}
+		// forming input
+		for j, val := range r {
+			switch headers[j] {
+			case "ip":
+				rowInput.IP = val
+			case "tag":
+				rowInput.Tag = val
+			case "version":
+				rowInput.Version = c.version
+				v, err := strconv.Atoi(val)
+				if err == nil && v != 0 {
+					rowInput.Version = SnmpVersion(v)
+				}
+			case "community":
+				rowInput.Community = val
+			case "oids":
+				if val != "" {
+					rowInput.Oids = strings.Split(val, " ")
+				} else {
+					rowInput.Oids = oids
+				}
+			case "timeout":
+				rowInput.Timeout = c.timeout
+				t, err := strconv.Atoi(val)
+				if err == nil && t != 0 {
+					rowInput.Timeout = t
+				}
+			case "retries":
+				rowInput.Retries = c.retries
+				t, err := strconv.Atoi(val)
+				if err == nil && t != 0 {
+					rowInput.Retries = t
+				}
+			case "port":
+				rowInput.Port = c.port
+				t, err := strconv.Atoi(val)
+				if err == nil && t != 0 {
+					rowInput.Port = t
+				}
+			case "security_level":
+				rowInput.SecurityLevel = val
+			case "user_name":
+				rowInput.UserName = val
+			case "auth_type":
+				rowInput.AuthType = val
+			case "auth_pass":
+				rowInput.AuthPass = val
+			case "priv_type":
+				rowInput.PrivType = val
+			case "priv_pass":
+				rowInput.PrivPass = val
+			case "context_name":
+				rowInput.ContextName = val
+			case "context_engineid":
+				rowInput.ContextEngineID = val
+			}
+		}
+		// adding as total input
+		out = append(out, rowInput)
 	}
 	return out
 }
 
 func (c *_csv) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
-	file, err := os.Create(fmt.Sprintf("./%s", c.ofile))
+	file, err := os.Create(fmt.Sprintf("%s", c.ofile))
 	if err != nil {
 		log.Fatal("Unable to write into file", err)
 	}
 	defer file.Close()
-	file.Write([]byte("ip,tag,oid,value,error_if_any\n"))
+	file.Write([]byte("ip,tag,result,error\n"))
 	for r := range ch {
-		if len(r.Data) != 0 {
-			for _, variable := range r.Data {
-				file.Write([]byte(fmt.Sprintf("%s,%s,%s,%v,%s\n", r.I.IP, r.I.Tag, variable.Name, variable.Value, r.Err)))
-			}
-		} else {
-			file.Write([]byte(fmt.Sprintf("%s,%s,,,%s\n", r.I.IP, r.I.Tag, r.Err)))
-
-		}
+		// data := []byte(`[{"value":12423,"name":"test","type":70}]`)
+		data, _ := json.Marshal(r.Data)
+		file.Write([]byte(fmt.Sprintf("%s,%s,%s,%s\n", r.I.IP, r.I.Tag, data, r.Err)))
 	}
 	exitCh <- struct{}{}
 }
