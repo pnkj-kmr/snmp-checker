@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -55,8 +54,8 @@ func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 	}
 
 	var data []Data
-	for _, variable := range result.Variables {
-		data = append(data, Data{Name: variable.Name, Value: variable.Value})
+	for _, v := range result.Variables {
+		data = append(data, Data{Name: v.Name, Value: v.Value, Type: v.Type})
 	}
 	return Output{I: i, Err: "", Data: data}, nil
 }
@@ -124,7 +123,7 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 
 	var data []Data
 	for _, v := range result.Variables {
-		data = append(data, Data{Name: v.Name, Value: fmt.Sprintf("%s", v.Value), Type: v.Type})
+		data = append(data, Data{Name: v.Name, Value: v.Value, Type: v.Type})
 	}
 	return Output{I: i, Err: "", Data: data}, nil
 }
