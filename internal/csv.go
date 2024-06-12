@@ -2,7 +2,6 @@ package internal
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -117,7 +116,16 @@ func (c *_csv) GetInput() (out []Input) {
 				rowInput.ContextName = val
 			case "context_engineid":
 				rowInput.ContextEngineID = val
+			default:
+				rowInput.IP = val
 			}
+		}
+		// re validating the result
+		if rowInput.Version == 0 {
+			rowInput.Version = c.version
+		}
+		if len(rowInput.Oids) == 0 {
+			rowInput.Oids = oids
 		}
 		// adding as total input
 		out = append(out, rowInput)
@@ -133,9 +141,12 @@ func (c *_csv) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
 	defer file.Close()
 	file.Write([]byte("ip,tag,result,error\n"))
 	for r := range ch {
-		// data := []byte(`[{"value":12423,"name":"test","type":70}]`)
-		data, _ := json.Marshal(r.Data)
-		file.Write([]byte(fmt.Sprintf("%s,%s,%s,%s\n", r.I.IP, r.I.Tag, data, r.Err)))
+		// r.Data = []Data{{Value: 12423, Name: "1.2.3.4.5"}, {Value: 12423, Name: "1.234.34.45.4.2.3.243.43.4.53.0", Type: 70}}
+		var data []string
+		for _, v := range r.Data {
+			data = append(data, fmt.Sprintf("%s=%v:%v", v.Name, v.Type, v.Value))
+		}
+		file.Write([]byte(fmt.Sprintf("%s,%s,%s,%s\n", r.I.IP, r.I.Tag, strings.Join(data, "|"), r.Err)))
 	}
 	exitCh <- struct{}{}
 }
