@@ -116,8 +116,6 @@ func (c *_csv) GetInput() (out []Input) {
 				rowInput.ContextName = val
 			case "context_engineid":
 				rowInput.ContextEngineID = val
-			default:
-				rowInput.IP = val
 			}
 		}
 		// re validating the result
