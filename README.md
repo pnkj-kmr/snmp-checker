@@ -40,6 +40,7 @@ _create a **input.json** file_
       "priv_pass": "123",			# optional
       "context_name": "",			# optional
       "context_engineid": ""		# optional
+      "custom_type": ""		      # optional  (MAC|HEXA|STRING)
     },
     { 
       "ip": "127.0.0.1", 
@@ -130,9 +131,11 @@ Usage of ./snmpchecker:
   -t int
         snmp timeout [secs] (default 5)
   -v string
-        SNMP version (2c / 3) (default "2c")
+        SNMP version (1 / 2c / 3) (default "2c")
   -w int
-        number of workers (default 4)
+        number of worker (default 4)
+  -walk
+        for snmpwalk - default[get]
 
 -------
 Example:
@@ -185,6 +188,14 @@ For json input and output
 
 ```
 ./snmpchecker -json
+```
+
+### `-walk` (DEFAULT: get)
+
+To perform complete snmpwalk 
+
+```
+./snmpchecker -walk
 ```
 
 ### `-w` (DEFAULT: 4)

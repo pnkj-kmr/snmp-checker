@@ -1,6 +1,11 @@
 package internal
 
-import g "github.com/gosnmp/gosnmp"
+import (
+	"flag"
+	"strings"
+
+	g "github.com/gosnmp/gosnmp"
+)
 
 func getMsgFlag(s string) g.SnmpV3MsgFlags {
 	switch s {
@@ -52,5 +57,35 @@ func getPrivType(s string) g.SnmpV3PrivProtocol {
 		return g.AES256C
 	default:
 		return g.NoPriv
+	}
+}
+
+func GetCmdPipe() CmdPipe {
+
+	fileName := flag.String("f", "input.csv", "give a file name")
+	outFilename := flag.String("o", "output.csv", "output file name")
+	noWorkers := flag.Int("w", 4, "number of worker")
+	retries := flag.Int("r", 0, "retries")
+	jsontype := flag.Bool("json", false, "file type - default[csv]")
+	version := flag.String("v", "2c", "SNMP version (1 / 2c / 3)")
+	timeout := flag.Int("t", 5, "snmp timeout [secs]")
+	oid := flag.String("oid", "1.3.6.1.2.1.1.1.0", "snmp walk oid (multiple -oid 'oid1 oid2 oid3')")
+	port := flag.Int("port", 161, "snmp port")
+	snmpWalkType := flag.Bool("walk", false, "for snmpwalk - default[get]")
+
+	flag.Parse()
+	oids := strings.Split((*oid), " ")
+
+	return CmdPipe{
+		InputFile:  *fileName,
+		OutputFile: *outFilename,
+		NoWokers:   *noWorkers,
+		Reties:     *retries,
+		JsonType:   *jsontype,
+		Version:    *version,
+		Timeout:    *timeout,
+		Oids:       oids,
+		Port:       *port,
+		WalkType:   *snmpWalkType,
 	}
 }

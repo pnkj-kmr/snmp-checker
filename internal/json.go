@@ -18,15 +18,21 @@ type _json struct {
 	port    int
 }
 
-func NewJSONV2C(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
+func NewV1_json(c CmdPipe) SNMPChecker {
 	return &_json{
-		ifile, ofile, Version2c, retries, timeout, oids, port,
+		c.InputFile, c.OutputFile, Version1, c.Reties, c.Timeout, c.Oids, c.Port,
 	}
 }
 
-func NewJSONV3(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
+func NewV2C_json(c CmdPipe) SNMPChecker {
 	return &_json{
-		ifile, ofile, Version3, retries, timeout, oids, port,
+		c.InputFile, c.OutputFile, Version2c, c.Reties, c.Timeout, c.Oids, c.Port,
+	}
+}
+
+func NewV3_json(c CmdPipe) SNMPChecker {
+	return &_json{
+		c.InputFile, c.OutputFile, Version3, c.Reties, c.Timeout, c.Oids, c.Port,
 	}
 }
 

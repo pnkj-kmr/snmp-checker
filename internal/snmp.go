@@ -7,8 +7,63 @@ import (
 	g "github.com/gosnmp/gosnmp"
 )
 
-// GetSNMP helps to perform snmp v2c and return the grouped result
-func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
+// SNMP_v1 helps to perform snmp v1 and return the grouped result
+func SNMP_v1(i Input, port uint16, walkFlag bool) (out Output, err error) {
+	//
+	//	snmpwalk -v 1 <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
+	//
+	var _port uint16 = uint16(i.Port)
+	if _port == 0 {
+		if port == 0 {
+			port = 161
+		}
+		_port = port
+	}
+	var community string = i.Community
+	if community == "" {
+		community = "public"
+	}
+	var timeout int = i.Timeout
+	if timeout == 0 {
+		timeout = 5
+	}
+
+	inst := &g.GoSNMP{
+		Target:             i.IP,
+		Port:               _port,
+		Transport:          "udp",
+		Community:          community,
+		Version:            g.Version1,
+		Timeout:            time.Duration(timeout) * time.Second,
+		ExponentialTimeout: true,
+		MaxOids:            60,
+		Retries:            i.Retries,
+	}
+
+	err = inst.Connect()
+	if err != nil {
+		log.Println("SNMP connection err", err)
+		return
+	}
+	defer inst.Conn.Close()
+
+	var data []Data
+	if walkFlag {
+		data, err = snmpWalk(inst, i.Oids[0], i.CustomType)
+		if err != nil {
+			return
+		}
+	} else {
+		data, err = snmpGet(inst, i.Oids, i.CustomType)
+		if err != nil {
+			return
+		}
+	}
+	return Output{I: i, Err: "", Data: data}, nil
+}
+
+// SNMP_v2c helps to perform snmp v2c and return the grouped result
+func SNMP_v2c(i Input, port uint16, walkFlag bool) (out Output, err error) {
 	//
 	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
@@ -47,21 +102,23 @@ func GetSNMP_V2C(i Input, port uint16) (out Output, err error) {
 	}
 	defer inst.Conn.Close()
 
-	result, err := inst.Get(i.Oids)
-	if err != nil {
-		log.Println("SNMP GET err", err)
-		return
-	}
-
 	var data []Data
-	for _, v := range result.Variables {
-		data = append(data, Data{Name: v.Name, Value: v.Value, Type: v.Type})
+	if walkFlag {
+		data, err = snmpBulkWalk(inst, i.Oids[0], i.CustomType)
+		if err != nil {
+			return
+		}
+	} else {
+		data, err = snmpGet(inst, i.Oids, i.CustomType)
+		if err != nil {
+			return
+		}
 	}
 	return Output{I: i, Err: "", Data: data}, nil
 }
 
-// GetSNMP_V3 helps to perform snmp v3 and return the grouped result
-func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
+// SNMP_v3 helps to perform snmp v3 and return the grouped result
+func SNMP_v3(i Input, port uint16, walkFlag bool) (out Output, err error) {
 	//
 	// snmpwalk -v 3 -l <level> -u <username> -a <authtype> -x <privtype> -A <authpass> -X <privpass>  <target> <oid>
 	//
@@ -115,15 +172,17 @@ func GetSNMP_V3(i Input, port uint16) (out Output, err error) {
 	}
 	defer inst.Conn.Close()
 
-	result, err := inst.Get(i.Oids)
-	if err != nil {
-		log.Println("SNMP GET err - ", err)
-		return
-	}
-
 	var data []Data
-	for _, v := range result.Variables {
-		data = append(data, Data{Name: v.Name, Value: v.Value, Type: v.Type})
+	if walkFlag {
+		data, err = snmpBulkWalk(inst, i.Oids[0], i.CustomType)
+		if err != nil {
+			return
+		}
+	} else {
+		data, err = snmpGet(inst, i.Oids, i.CustomType)
+		if err != nil {
+			return
+		}
 	}
 	return Output{I: i, Err: "", Data: data}, nil
 }

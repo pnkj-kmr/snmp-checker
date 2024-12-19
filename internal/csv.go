@@ -19,15 +19,21 @@ type _csv struct {
 	port    int
 }
 
-func NewV2C(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
+func NewV1(c CmdPipe) SNMPChecker {
 	return &_csv{
-		ifile, ofile, Version2c, retries, timeout, oids, port,
+		c.InputFile, c.OutputFile, Version1, c.Reties, c.Timeout, c.Oids, c.Port,
 	}
 }
 
-func NewV3(ifile, ofile string, retries, timeout, port int, oids []string) SNMPChecker {
+func NewV2C(c CmdPipe) SNMPChecker {
 	return &_csv{
-		ifile, ofile, Version3, retries, timeout, oids, port,
+		c.InputFile, c.OutputFile, Version2c, c.Reties, c.Timeout, c.Oids, c.Port,
+	}
+}
+
+func NewV3(c CmdPipe) SNMPChecker {
+	return &_csv{
+		c.InputFile, c.OutputFile, Version3, c.Reties, c.Timeout, c.Oids, c.Port,
 	}
 }
 

@@ -35,6 +35,7 @@ type Input struct {
 	PrivPass        string      `json:"priv_pass,omitempty"`
 	ContextName     string      `json:"context_name,omitempty"`
 	ContextEngineID string      `json:"context_engineid,omitempty"`
+	CustomType      string      `json:"custom_type,omitempty"`
 }
 
 // Data represent the snmp result
@@ -49,4 +50,18 @@ type Output struct {
 	I    Input  `json:"input"`
 	Err  string `json:"error,omitempty"`
 	Data []Data `json:"data"`
+}
+
+// CmdPipe helps to process commandline args
+type CmdPipe struct {
+	InputFile  string
+	OutputFile string
+	NoWokers   int
+	Reties     int
+	JsonType   bool
+	Version    string
+	Timeout    int
+	Oids       []string
+	Port       int
+	WalkType   bool
 }

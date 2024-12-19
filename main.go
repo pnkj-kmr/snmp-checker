@@ -1,46 +1,41 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"snmp-checker/internal"
-	"strings"
 	"sync"
 	"time"
 )
 
 func main() {
 	st := time.Now()
-	fileName := flag.String("f", "input.csv", "give a file name")
-	outFilename := flag.String("o", "output.csv", "output file name")
-	noWorkers := flag.Int("w", 4, "number of worker")
-	retries := flag.Int("r", 0, "retries")
-	jsontype := flag.Bool("json", false, "file type - default[csv]")
-	version := flag.String("v", "2c", "SNMP version (2c / 3)")
-	timeout := flag.Int("t", 5, "snmp timeout [secs]")
-	oid := flag.String("oid", "1.3.6.1.2.1.1.1.0", "snmp walk oid (multiple -oid 'oid1 oid2 oid3')")
-	port := flag.Int("port", 161, "snmp port")
-	flag.Parse()
-	oids := strings.Split((*oid), " ")
+	cmdPipe := internal.GetCmdPipe()
 
-	log.Println("file accepted:", *fileName, "| output file:", *outFilename)
-	log.Println("timeout:", *timeout, "| workers:", *noWorkers, "| port:", *port, "| version:", *version, "| json:", *jsontype, "| oids:", oids)
+	log.Println("file accepted:", cmdPipe.InputFile, "| output file:", cmdPipe.OutputFile)
+	log.Println("timeout:", cmdPipe.Timeout, "| workers:", cmdPipe.NoWokers, "| port:", cmdPipe.Port, "| version:", cmdPipe.Version, "| oids:", cmdPipe.Oids)
+	log.Println("walk type:", cmdPipe.WalkType, "| json:", cmdPipe.JsonType)
 
 	// SNMPChecker object instance
 	var snmpchecker internal.SNMPChecker
-	if *version == "2c" {
-		if *jsontype {
-			snmpchecker = internal.NewJSONV2C(*fileName, *outFilename, *retries, *timeout, *port, oids)
+	if cmdPipe.Version == "2c" {
+		if cmdPipe.JsonType {
+			snmpchecker = internal.NewV2C_json(cmdPipe)
 		} else {
 
-			snmpchecker = internal.NewV2C(*fileName, *outFilename, *retries, *timeout, *port, oids)
+			snmpchecker = internal.NewV2C(cmdPipe)
 		}
-	} else if *version == "3" {
-		if *jsontype {
-			snmpchecker = internal.NewJSONV3(*fileName, *outFilename, *retries, *timeout, *port, oids)
+	} else if cmdPipe.Version == "3" {
+		if cmdPipe.JsonType {
+			snmpchecker = internal.NewV3_json(cmdPipe)
 		} else {
-			snmpchecker = internal.NewV3(*fileName, *outFilename, *retries, *timeout, *port, oids)
+			snmpchecker = internal.NewV3(cmdPipe)
+		}
+	} else if cmdPipe.Version == "1" {
+		if cmdPipe.JsonType {
+			snmpchecker = internal.NewV1_json(cmdPipe)
+		} else {
+			snmpchecker = internal.NewV1(cmdPipe)
 		}
 	} else {
 		log.Fatal("Unsupported SNMP version")
@@ -50,23 +45,25 @@ func main() {
 	log.Println("Total IPs :", len(records))
 
 	exitChan := make(chan struct{})
-	ch := make(chan internal.Output, *noWorkers)
+	ch := make(chan internal.Output, cmdPipe.NoWokers)
 	go snmpchecker.ProduceOutput(ch, exitChan)
 
 	var wg sync.WaitGroup
-	c := make(chan int, *noWorkers)
+	c := make(chan int, cmdPipe.NoWokers)
 	for i := 0; i < len(records); i++ {
 		wg.Add(1)
 		c <- 1
-		go func(i internal.Input, ind, port int) {
+		go func(i internal.Input, ind, port int, walkFlag bool) {
 			defer func() { wg.Done(); <-c }()
 			// fmt.Println("ip--- ", ip)
 			var r internal.Output
 			var err error
 			if i.Version == internal.Version2c {
-				r, err = internal.GetSNMP_V2C(i, uint16(port))
+				r, err = internal.SNMP_v2c(i, uint16(port), walkFlag)
 			} else if i.Version == internal.Version3 {
-				r, err = internal.GetSNMP_V3(i, uint16(port))
+				r, err = internal.SNMP_v3(i, uint16(port), walkFlag)
+			} else if i.Version == internal.Version1 {
+				r, err = internal.SNMP_v1(i, uint16(port), walkFlag)
 			}
 			if err == nil {
 				err = fmt.Errorf("")
@@ -76,7 +73,7 @@ func main() {
 			}
 			// fmt.Println("--------result------", r, err)
 			ch <- r
-		}(records[i], i, *port)
+		}(records[i], i, cmdPipe.Port, cmdPipe.WalkType)
 		log.Println("IP sent for SNMP -- ", records[i], i+1)
 	}
 	wg.Wait()
