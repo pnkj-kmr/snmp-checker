@@ -14,7 +14,7 @@ func main() {
 
 	log.Println("file accepted:", cmdPipe.InputFile, "| output file:", cmdPipe.OutputFile)
 	log.Println("timeout:", cmdPipe.Timeout, "| workers:", cmdPipe.NoWokers, "| port:", cmdPipe.Port, "| version:", cmdPipe.Version, "| oids:", cmdPipe.Oids)
-	log.Println("walk type:", cmdPipe.WalkType, "| json:", cmdPipe.JsonType)
+	log.Println("snmp operation:", cmdPipe.Operation, "| json:", cmdPipe.JsonType)
 
 	// SNMPChecker object instance
 	var snmpchecker internal.SNMPChecker
@@ -53,17 +53,17 @@ func main() {
 	for i := 0; i < len(records); i++ {
 		wg.Add(1)
 		c <- 1
-		go func(i internal.Input, ind, port int, walkFlag bool) {
+		go func(i internal.Input, ind, port int, oper internal.SNMPOperation) {
 			defer func() { wg.Done(); <-c }()
 			// fmt.Println("ip--- ", ip)
 			var r internal.Output
 			var err error
 			if i.Version == internal.Version2c {
-				r, err = internal.SNMP_v2c(i, uint16(port), walkFlag)
+				r, err = internal.SNMP_v2c(i, uint16(port), oper)
 			} else if i.Version == internal.Version3 {
-				r, err = internal.SNMP_v3(i, uint16(port), walkFlag)
+				r, err = internal.SNMP_v3(i, uint16(port), oper)
 			} else if i.Version == internal.Version1 {
-				r, err = internal.SNMP_v1(i, uint16(port), walkFlag)
+				r, err = internal.SNMP_v1(i, uint16(port), oper)
 			}
 			if err == nil {
 				err = fmt.Errorf("")
@@ -73,7 +73,7 @@ func main() {
 			}
 			// fmt.Println("--------result------", r, err)
 			ch <- r
-		}(records[i], i, cmdPipe.Port, cmdPipe.WalkType)
+		}(records[i], i, cmdPipe.Port, cmdPipe.Operation)
 		log.Println("IP sent for SNMP -- ", records[i], i+1)
 	}
 	wg.Wait()

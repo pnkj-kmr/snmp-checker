@@ -124,6 +124,8 @@ Usage of ./snmpchecker:
         output file name (default "output.csv")
   -oid string
         snmp walk oid (multiple -oid 'oid1 oid2 oid3') (default "1.3.6.1.2.1.1.1.0")
+  -operation string
+        for snmp operations GET/WALK/BULKWALK (default "GET")
   -port int
         snmp port (default 161)
   -r int
@@ -134,8 +136,6 @@ Usage of ./snmpchecker:
         SNMP version (1 / 2c / 3) (default "2c")
   -w int
         number of worker (default 4)
-  -walk
-        for snmpwalk - default[get]
 
 -------
 Example:
@@ -190,12 +190,12 @@ For json input and output
 ./snmpchecker -json
 ```
 
-### `-walk` (DEFAULT: get)
+### `-operation` (DEFAULT: GET)
 
-To perform complete snmpwalk 
+To perform complete snmp operation like GET/WALK/BULKWALK 
 
 ```
-./snmpchecker -walk
+./snmpchecker -operation WALK
 ```
 
 ### `-w` (DEFAULT: 4)

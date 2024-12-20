@@ -52,6 +52,14 @@ type Output struct {
 	Data []Data `json:"data"`
 }
 
+type SNMPOperation uint8
+
+const (
+	GET      SNMPOperation = 0x1
+	WALK     SNMPOperation = 0x2
+	BULKWALK SNMPOperation = 0x3
+)
+
 // CmdPipe helps to process commandline args
 type CmdPipe struct {
 	InputFile  string
@@ -63,5 +71,5 @@ type CmdPipe struct {
 	Timeout    int
 	Oids       []string
 	Port       int
-	WalkType   bool
+	Operation  SNMPOperation
 }

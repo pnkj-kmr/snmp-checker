@@ -8,7 +8,7 @@ import (
 )
 
 // SNMP_v1 helps to perform snmp v1 and return the grouped result
-func SNMP_v1(i Input, port uint16, walkFlag bool) (out Output, err error) {
+func SNMP_v1(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 	//
 	//	snmpwalk -v 1 <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
@@ -48,12 +48,18 @@ func SNMP_v1(i Input, port uint16, walkFlag bool) (out Output, err error) {
 	defer inst.Conn.Close()
 
 	var data []Data
-	if walkFlag {
+	switch oper {
+	case BULKWALK:
+		data, err = snmpBulkWalk(inst, i.Oids[0], i.CustomType)
+		if err != nil {
+			return
+		}
+	case WALK:
 		data, err = snmpWalk(inst, i.Oids[0], i.CustomType)
 		if err != nil {
 			return
 		}
-	} else {
+	default:
 		data, err = snmpGet(inst, i.Oids, i.CustomType)
 		if err != nil {
 			return
@@ -63,7 +69,7 @@ func SNMP_v1(i Input, port uint16, walkFlag bool) (out Output, err error) {
 }
 
 // SNMP_v2c helps to perform snmp v2c and return the grouped result
-func SNMP_v2c(i Input, port uint16, walkFlag bool) (out Output, err error) {
+func SNMP_v2c(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 	//
 	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
@@ -103,12 +109,18 @@ func SNMP_v2c(i Input, port uint16, walkFlag bool) (out Output, err error) {
 	defer inst.Conn.Close()
 
 	var data []Data
-	if walkFlag {
+	switch oper {
+	case BULKWALK:
 		data, err = snmpBulkWalk(inst, i.Oids[0], i.CustomType)
 		if err != nil {
 			return
 		}
-	} else {
+	case WALK:
+		data, err = snmpWalk(inst, i.Oids[0], i.CustomType)
+		if err != nil {
+			return
+		}
+	default:
 		data, err = snmpGet(inst, i.Oids, i.CustomType)
 		if err != nil {
 			return
@@ -118,7 +130,7 @@ func SNMP_v2c(i Input, port uint16, walkFlag bool) (out Output, err error) {
 }
 
 // SNMP_v3 helps to perform snmp v3 and return the grouped result
-func SNMP_v3(i Input, port uint16, walkFlag bool) (out Output, err error) {
+func SNMP_v3(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 	//
 	// snmpwalk -v 3 -l <level> -u <username> -a <authtype> -x <privtype> -A <authpass> -X <privpass>  <target> <oid>
 	//
@@ -173,12 +185,18 @@ func SNMP_v3(i Input, port uint16, walkFlag bool) (out Output, err error) {
 	defer inst.Conn.Close()
 
 	var data []Data
-	if walkFlag {
+	switch oper {
+	case BULKWALK:
 		data, err = snmpBulkWalk(inst, i.Oids[0], i.CustomType)
 		if err != nil {
 			return
 		}
-	} else {
+	case WALK:
+		data, err = snmpWalk(inst, i.Oids[0], i.CustomType)
+		if err != nil {
+			return
+		}
+	default:
 		data, err = snmpGet(inst, i.Oids, i.CustomType)
 		if err != nil {
 			return

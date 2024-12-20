@@ -71,10 +71,19 @@ func GetCmdPipe() CmdPipe {
 	timeout := flag.Int("t", 5, "snmp timeout [secs]")
 	oid := flag.String("oid", "1.3.6.1.2.1.1.1.0", "snmp walk oid (multiple -oid 'oid1 oid2 oid3')")
 	port := flag.Int("port", 161, "snmp port")
-	snmpWalkType := flag.Bool("walk", false, "for snmpwalk - default[get]")
-
+	snmpOperation := flag.String("operation", "GET", "for snmp operations GET/WALK/BULKWALK")
 	flag.Parse()
+
 	oids := strings.Split((*oid), " ")
+	var operation SNMPOperation
+	switch *snmpOperation {
+	case "WALK":
+		operation = WALK
+	case "BULKWALK":
+		operation = BULKWALK
+	default:
+		operation = GET
+	}
 
 	return CmdPipe{
 		InputFile:  *fileName,
@@ -86,6 +95,6 @@ func GetCmdPipe() CmdPipe {
 		Timeout:    *timeout,
 		Oids:       oids,
 		Port:       *port,
-		WalkType:   *snmpWalkType,
+		Operation:  operation,
 	}
 }
