@@ -12,6 +12,7 @@ func SNMP_v1(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 	//
 	//	snmpwalk -v 1 <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
+	out.I = i
 	var _port uint16 = uint16(i.Port)
 	if _port == 0 {
 		if port == 0 {
@@ -65,7 +66,8 @@ func SNMP_v1(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 			return
 		}
 	}
-	return Output{I: i, Err: "", Data: data}, nil
+	out.Data = data
+	return
 }
 
 // SNMP_v2c helps to perform snmp v2c and return the grouped result
@@ -73,6 +75,7 @@ func SNMP_v2c(i Input, port uint16, oper SNMPOperation) (out Output, err error) 
 	//
 	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
 	//
+	out.I = i
 	var _port uint16 = uint16(i.Port)
 	if _port == 0 {
 		if port == 0 {
@@ -126,7 +129,8 @@ func SNMP_v2c(i Input, port uint16, oper SNMPOperation) (out Output, err error) 
 			return
 		}
 	}
-	return Output{I: i, Err: "", Data: data}, nil
+	out.Data = data
+	return
 }
 
 // SNMP_v3 helps to perform snmp v3 and return the grouped result
@@ -138,6 +142,7 @@ func SNMP_v3(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 		TODO - need to handle snmp v3 properly as per auth and priv types
 	*/
 
+	out.I = i
 	var _port uint16 = uint16(i.Port)
 	if _port == 0 {
 		if port == 0 {
@@ -202,5 +207,6 @@ func SNMP_v3(i Input, port uint16, oper SNMPOperation) (out Output, err error) {
 			return
 		}
 	}
-	return Output{I: i, Err: "", Data: data}, nil
+	out.Data = data
+	return
 }

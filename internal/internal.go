@@ -72,4 +72,5 @@ type CmdPipe struct {
 	Oids       []string
 	Port       int
 	Operation  SNMPOperation
+	AppVersion bool
 }

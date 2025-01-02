@@ -61,7 +61,7 @@ func getPrivType(s string) g.SnmpV3PrivProtocol {
 }
 
 func GetCmdPipe() CmdPipe {
-
+	appVersion := flag.Bool("version", false, "Application version")
 	fileName := flag.String("f", "input.csv", "give a file name")
 	outFilename := flag.String("o", "output.csv", "output file name")
 	noWorkers := flag.Int("w", 4, "number of worker")
@@ -96,5 +96,6 @@ func GetCmdPipe() CmdPipe {
 		Oids:       oids,
 		Port:       *port,
 		Operation:  operation,
+		AppVersion: *appVersion,
 	}
 }
