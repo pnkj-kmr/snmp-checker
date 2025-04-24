@@ -16,14 +16,14 @@ func main() {
 	st := time.Now()
 	cmdPipe := internal.GetCmdPipe()
 
+	if cmdPipe.AppVersion {
+		fmt.Println("Version: ", appVersion)
+		return
+	}
+
 	log.Println("file accepted:", cmdPipe.InputFile, "| output file:", cmdPipe.OutputFile)
 	log.Println("timeout:", cmdPipe.Timeout, "| workers:", cmdPipe.NoWokers, "| port:", cmdPipe.Port, "| version:", cmdPipe.Version, "| oids:", cmdPipe.Oids)
 	log.Println("snmp operation:", cmdPipe.Operation, "| json:", cmdPipe.JsonType)
-
-	if cmdPipe.AppVersion {
-		log.Println("Version: ", appVersion)
-		return
-	}
 
 	// SNMPChecker object instance
 	var snmpchecker internal.SNMPChecker

@@ -1,7 +1,5 @@
 package internal
 
-import g "github.com/gosnmp/gosnmp"
-
 type SnmpVersion uint8
 
 const (
@@ -42,7 +40,7 @@ type Input struct {
 type Data struct {
 	Value interface{} `json:"value"`
 	Name  string      `json:"name"`
-	Type  g.Asn1BER   `json:"type"`
+	Type  string      `json:"type"`
 }
 
 // Output represent the output result
