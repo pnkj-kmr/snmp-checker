@@ -61,12 +61,20 @@ func parseData(d g.SnmpPDU, customType string) (data Data) {
 	case g.Integer, g.Counter32, g.Gauge32, g.TimeTicks, g.Counter64, g.Uinteger32:
 		data = Data{Name: d.Name, Value: g.ToBigInt(d.Value), Type: pduTypeToString(d.Type)}
 	case g.OctetString:
-		b := d.Value.([]byte)
+		b, ok := d.Value.([]byte)
+		if !ok || b == nil {
+			data = Data{Name: d.Name, Value: "", Type: "STRING"}
+			break
+		}
 		value, new_type := parseOctetString(b, customType)
 		data = Data{Name: d.Name, Value: value, Type: new_type}
 	default:
 		// default value should be string and type should be specified
-		data = Data{Name: d.Name, Value: d.Value.(string), Type: pduTypeToString(d.Type)}
+		strVal, ok := d.Value.(string)
+		if !ok {
+			strVal = fmt.Sprintf("%v", d.Value)
+		}
+		data = Data{Name: d.Name, Value: strVal, Type: pduTypeToString(d.Type)}
 	}
 	return
 }
