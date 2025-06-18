@@ -3,48 +3,36 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
-	"log"
+	"log/slog"
 	"os"
 )
 
 type _json struct {
 	ifile   string
 	ofile   string
-	version SnmpVersion
 	retries int
 	timeout int
 	oids    []string
 	port    int
 }
 
-func NewV1_json(c CmdPipe) SNMPChecker {
+func NewJSON(c CmdPipe) SNMPChecker {
 	return &_json{
-		c.InputFile, c.OutputFile, Version1, c.Reties, c.Timeout, c.Oids, c.Port,
-	}
-}
-
-func NewV2C_json(c CmdPipe) SNMPChecker {
-	return &_json{
-		c.InputFile, c.OutputFile, Version2c, c.Reties, c.Timeout, c.Oids, c.Port,
-	}
-}
-
-func NewV3_json(c CmdPipe) SNMPChecker {
-	return &_json{
-		c.InputFile, c.OutputFile, Version3, c.Reties, c.Timeout, c.Oids, c.Port,
+		c.InputFile, c.OutputFile, c.Reties, c.Timeout, c.Oids, c.Port,
 	}
 }
 
 func (j *_json) GetInput() (out []Input) {
 	fileData, err := os.ReadFile(j.ifile)
 	if err != nil {
-		log.Fatal("Error while read the json file", err)
+		slog.Error("Error while read the json file", "error", err)
+		os.Exit(1)
 	}
 
 	err = json.Unmarshal(fileData, &out)
 	if err != nil {
-		log.Fatal("Error while converting to json", err)
+		slog.Error("Error while converting to json", "error", err)
+		os.Exit(1)
 	}
 
 	var oids []string
@@ -57,7 +45,7 @@ func (j *_json) GetInput() (out []Input) {
 	var outnew []Input
 	for _, d := range out {
 		if d.Version == 0 {
-			d.Version = j.version
+			d.Version = 2
 		}
 		if len(d.Oids) == 0 {
 			d.Oids = oids
@@ -83,9 +71,10 @@ func (j *_json) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
 	}
 
 	outJson, _ := json.Marshal(out)
-	err := ioutil.WriteFile(fmt.Sprintf("%s", j.ofile), outJson, 0644)
+	err := os.WriteFile(fmt.Sprintf("%s", j.ofile), outJson, 0644)
 	if err != nil {
-		log.Fatal("Error while writing into file", err)
+		slog.Error("Error while writing into file", "error", err)
+		os.Exit(1)
 	}
 
 	exitCh <- struct{}{}

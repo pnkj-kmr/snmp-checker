@@ -3,7 +3,7 @@ package internal
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
+	"log/slog"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -14,7 +14,7 @@ import (
 func snmpGet(inst *g.GoSNMP, Oids []string, customType string) (data []Data, err error) {
 	result, err := inst.Get(Oids)
 	if err != nil {
-		log.Println("SNMP GET err", err)
+		slog.Warn("SNMP GET", "error", err)
 		return
 	}
 	for _, v := range result.Variables {
@@ -36,7 +36,7 @@ func snmpWalk(inst *g.GoSNMP, Oid, customType string) (data []Data, err error) {
 	}
 	err = inst.Walk(Oid, callback)
 	if err != nil {
-		log.Println("SNMP WALK err", err)
+		slog.Warn("SNMP WALK", "error", err)
 		return
 	}
 	return
@@ -50,7 +50,7 @@ func snmpBulkWalk(inst *g.GoSNMP, Oid, customType string) (data []Data, err erro
 	}
 	err = inst.BulkWalk(Oid, callback)
 	if err != nil {
-		log.Println("SNMP BULK WALK err", err)
+		slog.Warn("SNMP BULK WALK", "error", err)
 		return
 	}
 	return

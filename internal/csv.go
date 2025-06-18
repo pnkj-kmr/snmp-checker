@@ -3,7 +3,7 @@ package internal
 import (
 	"encoding/csv"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -12,42 +12,31 @@ import (
 type _csv struct {
 	ifile   string
 	ofile   string
-	version SnmpVersion
 	retries int
 	timeout int
 	oids    []string
 	port    int
 }
 
-func NewV1(c CmdPipe) SNMPChecker {
+func NewCSV(c CmdPipe) SNMPChecker {
 	return &_csv{
-		c.InputFile, c.OutputFile, Version1, c.Reties, c.Timeout, c.Oids, c.Port,
-	}
-}
-
-func NewV2C(c CmdPipe) SNMPChecker {
-	return &_csv{
-		c.InputFile, c.OutputFile, Version2c, c.Reties, c.Timeout, c.Oids, c.Port,
-	}
-}
-
-func NewV3(c CmdPipe) SNMPChecker {
-	return &_csv{
-		c.InputFile, c.OutputFile, Version3, c.Reties, c.Timeout, c.Oids, c.Port,
+		c.InputFile, c.OutputFile, c.Reties, c.Timeout, c.Oids, c.Port,
 	}
 }
 
 func (c *_csv) GetInput() (out []Input) {
 	file, err := os.Open(c.ifile)
 	if err != nil {
-		log.Fatal("Error while reading the file", err)
+		slog.Error("Error while reading the file", "error", err)
+		os.Exit(1)
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		log.Fatal("Error while Error reading records", err)
+		slog.Error("Error while Error reading records", "error", err)
+		os.Exit(1)
 	}
 
 	var oids []string
@@ -75,10 +64,10 @@ func (c *_csv) GetInput() (out []Input) {
 			case "tag":
 				rowInput.Tag = val
 			case "version":
-				rowInput.Version = c.version
+				// rowInput.Version = val
 				v, err := strconv.Atoi(val)
 				if err == nil && v != 0 {
-					rowInput.Version = SnmpVersion(v)
+					rowInput.Version = v
 				}
 			case "community":
 				rowInput.Community = val
@@ -126,7 +115,7 @@ func (c *_csv) GetInput() (out []Input) {
 		}
 		// re validating the result
 		if rowInput.Version == 0 {
-			rowInput.Version = c.version
+			rowInput.Version = 2
 		}
 		if len(rowInput.Oids) == 0 {
 			rowInput.Oids = oids
@@ -140,7 +129,8 @@ func (c *_csv) GetInput() (out []Input) {
 func (c *_csv) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
 	file, err := os.Create(fmt.Sprintf("%s", c.ofile))
 	if err != nil {
-		log.Fatal("Unable to write into file", err)
+		slog.Error("Unable to write into file", "error", err)
+		os.Exit(1)
 	}
 	defer file.Close()
 	file.Write([]byte("ip,tag,result,error\n"))
