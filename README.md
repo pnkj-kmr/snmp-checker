@@ -116,6 +116,10 @@ _As a result **output.csv** file will be created after completion_
 
 ----------------------
 Usage of ./snmpchecker:
+  -debug
+        log level - default[false]
+  -encoding
+        encoding - default[false]
   -f string
         give a file name (default "input.csv")
   -json
@@ -132,10 +136,10 @@ Usage of ./snmpchecker:
         retries
   -t int
         snmp timeout [secs] (default 5)
-  -v string
-        SNMP version (1 / 2c / 3) (default "2c")
+  -version
+        Application version
   -w int
-        number of worker (default 4)
+        number of worker threads (default 4)
 
 -------
 Example:
@@ -215,12 +219,20 @@ Increase end IP SNMP timeout
 ./snmpchecker -t 10
 ```
 
-### `-v` (DEFAULT: 2c)
+### `-debug` (DEFAULT: false)
 
-SNMP version changes
+Enable debug log output
 
 ```
-./snmpchecker -v 3
+./snmpchecker -debug
+```
+
+### `-encoding` (DEFAULT: false)
+
+SNMP credential given as encoded input
+
+```
+./snmpchecker -encoding
 ```
 
 ### `-r` (DEFAULT: 0)
