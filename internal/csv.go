@@ -127,7 +127,7 @@ func (c *_csv) GetInput() (out []Input) {
 }
 
 func (c *_csv) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
-	file, err := os.Create(fmt.Sprintf("%s", c.ofile))
+	file, err := os.Create(c.ofile)
 	if err != nil {
 		slog.Error("Unable to write into file", "error", err)
 		os.Exit(1)

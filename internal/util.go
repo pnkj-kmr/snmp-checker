@@ -75,19 +75,20 @@ func getPrivType(s string) g.SnmpV3PrivProtocol {
 }
 
 func GetCmdPipe() CmdPipe {
-	appVersion := flag.Bool("version", false, "Application version")
-	fileName := flag.String("f", "input.csv", "give a file name")
-	outFilename := flag.String("o", "output.csv", "output file name")
-	noWorkers := flag.Int("w", 4, "number of worker threads")
-	retries := flag.Int("r", 0, "retries")
-	jsontype := flag.Bool("json", false, "file type - default[csv]")
-	timeout := flag.Int("t", 5, "snmp timeout [secs]")
-	oid := flag.String("oid", "1.3.6.1.2.1.1.1.0", "snmp walk oid (multiple -oid 'oid1 oid2 oid3')")
-	port := flag.Int("port", 161, "snmp port")
-	snmpOperation := flag.String("operation", "GET", "for snmp operations GET/WALK/BULKWALK")
-	debug := flag.Bool("debug", false, "log level - default[false]")
-	encodingEnabled := flag.Bool("encoding", false, "encoding - default[false]")
-	// display := flag.Bool("display", false, "display raw record - default[false]")
+	appVersion := flag.Bool("version", false, "Application Version")
+	fileName := flag.String("f", "input.csv", "Input Filename")
+	outFilename := flag.String("o", "output.csv", "Output Filename")
+	noWorkers := flag.Int("w", 10, "Number of Worker Threads")
+	retries := flag.Int("r", 0, "Retries")
+	jsontype := flag.Bool("json", false, "File Type - default[csv]")
+	timeout := flag.Int("t", 5, "SNMP Timeout [secs]")
+	oid := flag.String("oid", "1.3.6.1.2.1.1.1.0", "SNMPp Default Oid (multiple -oid 'oid1 oid2 oid3')")
+	port := flag.Int("port", 161, "SNMP Port")
+	snmpOperation := flag.String("operation", "GET", "SNMP Operations GET/WALK/BULKWALK")
+	debug := flag.Bool("debug", false, "Log Level - default[false]")
+	encodingEnabled := flag.Bool("encoding", false, "Encoding - default[false]")
+	syncFetch := flag.Bool("sync", false, "Syncronize (Group by IP) - default[false]")
+	syncFetchSleep := flag.Int("sync_sleep", 0, "Sycronize Sleep Interval [msecs]")
 	flag.Parse()
 
 	oids := strings.Split((*oid), " ")
@@ -114,7 +115,8 @@ func GetCmdPipe() CmdPipe {
 		AppVersion:      *appVersion,
 		Debug:           *debug,
 		EncodingEnabled: *encodingEnabled,
-		// Display:         *display,
+		SyncFetch:       *syncFetch,
+		SyncSleep:       *syncFetchSleep,
 	}
 }
 
@@ -128,4 +130,12 @@ func Decode(s string) string {
 		return ""
 	}
 	return string(d)
+}
+
+func groupByIP(data []Input) (out map[string][]Input) {
+	grouped := make(map[string][]Input)
+	for _, i := range data {
+		grouped[i.IP] = append(grouped[i.IP], i)
+	}
+	return grouped
 }

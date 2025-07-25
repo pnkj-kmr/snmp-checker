@@ -7,11 +7,8 @@ import (
 	g "github.com/gosnmp/gosnmp"
 )
 
-// SNMP_v1 helps to perform snmp v1 and return the grouped result
-func SNMP_v1(i Input, cmd CmdPipe) (out Output, err error) {
-	//
-	//	snmpwalk -v 1 <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
-	//
+// SNMP helps to perform snmp operation and return the grouped result
+func SNMP(i Input, cmd CmdPipe) (out Output, err error) {
 	inst := getSNMPInstance(i, cmd)
 	err = inst.Connect()
 	if err != nil {
@@ -22,37 +19,28 @@ func SNMP_v1(i Input, cmd CmdPipe) (out Output, err error) {
 	return doSNMP(inst, i, cmd.Operation)
 }
 
-// SNMP_v2c helps to perform snmp v2c and return the grouped result
-func SNMP_v2c(i Input, cmd CmdPipe) (out Output, err error) {
-	//
-	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
-	//
-	inst := getSNMPInstance(i, cmd)
+// SNMPSync helps to perform snmp operation and return the grouped result
+func SNMPSync(inputs []Input, cmd CmdPipe) (out []Output, err error) {
+	inst := getSNMPInstance(inputs[0], cmd)
 	err = inst.Connect()
 	if err != nil {
 		slog.Warn("SNMP connection", "error", err)
 		return
 	}
 	defer inst.Conn.Close()
-	return doSNMP(inst, i, cmd.Operation)
-}
 
-// SNMP_v3 helps to perform snmp v3 and return the grouped result
-func SNMP_v3(i Input, cmd CmdPipe) (out Output, err error) {
-	//
-	// snmpwalk -v 3 -l <level> -u <username> -a <authtype> -x <privtype> -A <authpass> -X <privpass>  <target> <oid>
-	//
-	/*
-		TODO - need to handle snmp v3 properly as per auth and priv types
-	*/
-	inst := getSNMPInstance(i, cmd)
-	err = inst.Connect()
-	if err != nil {
-		slog.Warn("SNMP connection", "error", err)
-		return
+	// looping over smae ip resources
+	for _, i := range inputs {
+		o, _err := doSNMP(inst, i, cmd.Operation)
+		if _err != nil {
+			return out, _err
+		}
+		out = append(out, o)
+		if cmd.SyncSleep != 0 {
+			time.Sleep(time.Duration(cmd.SyncSleep) * time.Millisecond)
+		}
 	}
-	defer inst.Conn.Close()
-	return doSNMP(inst, i, cmd.Operation)
+	return
 }
 
 func doSNMP(inst *g.GoSNMP, i Input, oper SNMPOperation) (out Output, err error) {
@@ -117,7 +105,7 @@ func getSNMPInstance(i Input, cmd CmdPipe) *g.GoSNMP {
 
 	_snmp := g.Default
 
-	_snmp.Target = ""
+	_snmp.Target = i.IP
 	_snmp.Port = _port
 	_snmp.Retries = retries
 	_snmp.Timeout = time.Duration(timeout) * time.Second

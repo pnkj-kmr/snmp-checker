@@ -64,5 +64,6 @@ type CmdPipe struct {
 	AppVersion      bool
 	Debug           bool
 	EncodingEnabled bool
-	// Display         bool
+	SyncFetch       bool
+	SyncSleep       int
 }

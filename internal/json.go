@@ -2,7 +2,6 @@ package internal
 
 import (
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"os"
 )
@@ -71,7 +70,7 @@ func (j *_json) ProduceOutput(ch <-chan Output, exitCh chan<- struct{}) {
 	}
 
 	outJson, _ := json.Marshal(out)
-	err := os.WriteFile(fmt.Sprintf("%s", j.ofile), outJson, 0644)
+	err := os.WriteFile(j.ofile, outJson, 0644)
 	if err != nil {
 		slog.Error("Error while writing into file", "error", err)
 		os.Exit(1)

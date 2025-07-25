@@ -2,10 +2,8 @@ package main
 
 import (
 	_ "embed"
-	"fmt"
 	"log/slog"
 	"snmp-checker/internal"
-	"sync"
 	"time"
 )
 
@@ -43,38 +41,16 @@ func main() {
 	records := snmpchecker.GetInput()
 	slog.Info("total records...", "count", len(records))
 
+	// make required channel
 	exitChan := make(chan struct{})
 	ch := make(chan internal.Output, cmdPipe.NoWokers)
+
+	// running output builder
 	go snmpchecker.ProduceOutput(ch, exitChan)
 
-	var wg sync.WaitGroup
-	c := make(chan int, cmdPipe.NoWokers)
-	for i := 0; i < len(records); i++ {
-		wg.Add(1)
-		c <- 1
-		go func(i internal.Input, ind int, cmdPipe internal.CmdPipe) {
-			defer func() { wg.Done(); <-c }()
-			var r internal.Output
-			var err error
-			switch i.Version {
-			case 1:
-				r, err = internal.SNMP_v1(i, cmdPipe)
-			case 2:
-				r, err = internal.SNMP_v2c(i, cmdPipe)
-			case 3:
-				r, err = internal.SNMP_v1(i, cmdPipe)
-			}
-			if err == nil {
-				err = fmt.Errorf("")
-				r.Err = err.Error()
-			} else {
-				r = internal.Output{I: i, Err: err.Error(), Data: []internal.Data{}}
-			}
-			ch <- r
-		}(records[i], i, cmdPipe)
-		slog.Debug("SNMP configuration trigger...", "record", records[i], "counter", i+1)
-	}
-	wg.Wait()
+	// main executor function
+	internal.Execute(records, cmdPipe, ch)
+
 	close(ch)
 	<-exitChan
 	slog.Info("Execution completed...", "time_taken", time.Since(st))
