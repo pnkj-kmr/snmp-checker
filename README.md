@@ -117,29 +117,33 @@ _As a result **output.csv** file will be created after completion_
 ----------------------
 Usage of ./snmpchecker:
   -debug
-        log level - default[false]
+        Log Level - default[false]
   -encoding
-        encoding - default[false]
+        Encoding - default[false]
   -f string
-        give a file name (default "input.csv")
+        Input Filename (default "input.csv")
   -json
-        file type - default[csv]
+        File Type - default[csv]
   -o string
-        output file name (default "output.csv")
+        Output Filename (default "output.csv")
   -oid string
-        snmp walk oid (multiple -oid 'oid1 oid2 oid3') (default "1.3.6.1.2.1.1.1.0")
+        SNMPp Default Oid (multiple -oid 'oid1 oid2 oid3') (default "1.3.6.1.2.1.1.1.0")
   -operation string
-        for snmp operations GET/WALK/BULKWALK (default "GET")
+        SNMP Operations GET/WALK/BULKWALK (default "GET")
   -port int
-        snmp port (default 161)
+        SNMP Port (default 161)
   -r int
-        retries
+        Retries
+  -sync
+        Syncronize (Group by IP) - default[false]
+  -sync_sleep int
+        Sycronize Sleep Interval [msecs]
   -t int
-        snmp timeout [secs] (default 5)
+        SNMP Timeout [secs] (default 5)
   -version
-        Application version
+        Application Version
   -w int
-        number of worker threads (default 4)
+        Number of Worker Threads (default 10)
 
 -------
 Example:
@@ -233,6 +237,22 @@ SNMP credential given as encoded input
 
 ```
 ./snmpchecker -encoding
+```
+
+### `-sync` (DEFAULT: false)
+
+SNMP Sync - help to group the ip based inputs
+
+```
+./snmpchecker -sync
+```
+
+### `-sync_sleep` (DEFAULT: 0)
+
+SNMP Sync sleep interval - it helps to sleep between each call over one ip_address
+
+```
+./snmpchecker -sync_sleep 100
 ```
 
 ### `-r` (DEFAULT: 0)
