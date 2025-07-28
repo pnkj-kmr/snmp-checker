@@ -71,12 +71,27 @@ func doSNMP(inst *g.GoSNMP, i Input, oper SNMPOperation) (out Output, err error)
 }
 
 func getSNMPInstance(i Input, cmd CmdPipe) *g.GoSNMP {
+	version := getVersion(i.Version)
+	switch version {
+	case g.Version1:
+		return getV1(i, cmd)
+
+	case g.Version2c:
+		return getV2C(i, cmd)
+
+	case g.Version3:
+		return getV3(i, cmd)
+
+	default:
+		return getV2C(i, cmd)
+	}
+}
+
+func getV1(i Input, cmd CmdPipe) *g.GoSNMP {
 	//
 	//	snmpwalk -v 1 <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
-	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
-	// 	snmpwalk -v 3 -l <level> -u <username> -a <authtype> -x <privtype> -A <authpass> -X <privpass>  <target> <oid>
 	//
-
+	var maxOids = 60
 	var _port uint16 = uint16(i.Port)
 	if _port == 0 {
 		_port = uint16(cmd.Port)
@@ -85,73 +100,120 @@ func getSNMPInstance(i Input, cmd CmdPipe) *g.GoSNMP {
 	if community == "" {
 		community = "public"
 	}
+	if cmd.EncodingEnabled {
+		community = Decode(community)
+	}
 	var timeout int = i.Timeout
 	if timeout == 0 {
 		timeout = cmd.Timeout
+	}
+	var retries = i.Retries
+	if retries > 3 {
+		retries = 3
+	}
+
+	inst := &g.GoSNMP{
+		Target:             i.IP,
+		Port:               _port,
+		Transport:          "udp",
+		Community:          community,
+		Version:            g.Version1,
+		Timeout:            time.Duration(timeout) * time.Second,
+		ExponentialTimeout: true,
+		MaxOids:            maxOids,
+		Retries:            retries,
+	}
+	return inst
+}
+
+func getV2C(i Input, cmd CmdPipe) *g.GoSNMP {
+	//
+	//	snmpwalk -v 2c -c <community> <target> <oid (i.e. 1.3.6.1.2.1.1.3.0)>
+	//
+	var maxOids = 60
+	var _port uint16 = uint16(i.Port)
+	if _port == 0 {
+		_port = uint16(cmd.Port)
+	}
+	var community string = i.Community
+	if community == "" {
+		community = "public"
+	}
+	if cmd.EncodingEnabled {
+		community = Decode(community)
+	}
+	var timeout int = i.Timeout
+	if timeout == 0 {
+		timeout = cmd.Timeout
+	}
+	var retries = i.Retries
+	if retries > 3 {
+		retries = 3
+	}
+
+	inst := &g.GoSNMP{
+		Target:             i.IP,
+		Port:               _port,
+		Transport:          "udp",
+		Community:          community,
+		Version:            g.Version2c,
+		Timeout:            time.Duration(timeout) * time.Second,
+		ExponentialTimeout: true,
+		MaxOids:            maxOids,
+		Retries:            retries,
+	}
+	return inst
+}
+
+func getV3(i Input, cmd CmdPipe) *g.GoSNMP {
+	//
+	// snmpwalk -v 3 -l <level> -u <username> -a <authtype> -x <privtype> -A <authpass> -X <privpass>  <target> <oid>
+	//
+	var maxOids = 60
+	var _port uint16 = uint16(i.Port)
+	if _port == 0 {
+		_port = uint16(cmd.Port)
+	}
+	var timeout int = i.Timeout
+	if timeout == 0 {
+		timeout = cmd.Timeout
+	}
+	var retries = i.Retries
+	if retries > 3 {
+		retries = 3
 	}
 	var msgFlag string = i.SecurityLevel
 	if msgFlag == "" {
 		msgFlag = "AuthPriv"
 	}
-	// we are not allowing more than 3 retries of a IP
-	// helps to reducs the poll cycle
-	var retries = i.Retries
-	if retries > 3 {
-		retries = 3
+	authPass := i.AuthPass
+	if cmd.EncodingEnabled {
+		authPass = Decode(i.AuthPass)
 	}
-	var maxOids = 60
+	privPass := i.PrivPass
+	if cmd.EncodingEnabled {
+		privPass = Decode(i.PrivPass)
+	}
 
-	version := getVersion(i.Version)
-
-	_snmp := g.Default
-
-	_snmp.Target = i.IP
-	_snmp.Port = _port
-	_snmp.Retries = retries
-	_snmp.Timeout = time.Duration(timeout) * time.Second
-	_snmp.MaxOids = maxOids
-	_snmp.ExponentialTimeout = true
-	_snmp.Version = version
-
-	switch version {
-	case g.Version1:
-		_snmp.Transport = "udp"
-		_community := i.Community
-		if cmd.EncodingEnabled {
-			_community = Decode(i.Community)
-		}
-		_snmp.Community = _community
-	case g.Version2c:
-		_snmp.Transport = "udp"
-		_community := i.Community
-		if cmd.EncodingEnabled {
-			_community = Decode(i.Community)
-		}
-		_snmp.Community = _community
-	case g.Version3:
-		_authPass := i.AuthPass
-		if cmd.EncodingEnabled {
-			_authPass = Decode(i.AuthPass)
-		}
-		_privPass := i.PrivPass
-		if cmd.EncodingEnabled {
-			_privPass = Decode(i.PrivPass)
-		}
-
-		_snmp.SecurityModel = g.UserSecurityModel
-		_snmp.MsgFlags = getMsgFlag(msgFlag)
-		_snmp.SecurityParameters = &g.UsmSecurityParameters{
+	inst := &g.GoSNMP{
+		Target:             i.IP,
+		Port:               _port,
+		Version:            g.Version3,
+		SecurityModel:      g.UserSecurityModel,
+		MsgFlags:           getMsgFlag(msgFlag),
+		Timeout:            time.Duration(timeout) * time.Second,
+		ExponentialTimeout: true,
+		MaxOids:            maxOids,
+		Retries:            retries,
+		SecurityParameters: &g.UsmSecurityParameters{
 			UserName:                 i.UserName,
 			AuthenticationProtocol:   getAuthType(i.AuthType),
-			AuthenticationPassphrase: _authPass,
+			AuthenticationPassphrase: authPass,
 			PrivacyProtocol:          getPrivType(i.PrivType),
-			PrivacyPassphrase:        _privPass,
-		}
-		_snmp.ContextName = i.ContextName
-		if i.ContextEngineID != "" {
-			_snmp.ContextEngineID = i.ContextEngineID
-		}
+			PrivacyPassphrase:        privPass,
+		},
+		ContextEngineID: i.ContextEngineID,
+		ContextName:     i.ContextName,
 	}
-
-	return _snmp
+	return inst
 }
