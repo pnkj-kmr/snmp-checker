@@ -28,6 +28,7 @@ func main() {
 		"timeout", cmdPipe.Timeout, "no_of_workers", cmdPipe.NoWokers,
 		"port", cmdPipe.Port, "oids", cmdPipe.Oids, "operation", cmdPipe.Operation,
 		"json", cmdPipe.JsonType, "debug", cmdPipe.Debug, "encoding_enabled", cmdPipe.EncodingEnabled,
+		"sync", cmdPipe.SyncFetch, "sync_sleep", cmdPipe.SyncSleep,
 	)
 
 	// SNMPChecker object instance
